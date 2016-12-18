@@ -17,7 +17,7 @@ app.get('/', function( req, res) {
 });
 app.use('/client', express.static(__dirname + '/client'))
 
-serv.listen(2000);
+serv.listen(process.env.PORT || 2000);
 console.log("Server started :3");
 
 io.sockets.on('connection', function(socket){
