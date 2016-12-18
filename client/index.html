@@ -1,0 +1,123 @@
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+<div id="loginDiv">
+  Username: <input id="logingUsername" type="text"></input><br>
+  <button id="loginButton">Login</button>
+</div>
+<div id="gameDiv" style="display:none">
+  <canvas id="ctx" width="800" height="450" style="border:1px solid #000000;"></canvas><br>
+  <button id="startButton">Start</button>
+</div>
+
+
+<script>
+  var socket = io();
+  var loginDiv = document.getElementById('loginDiv');
+  var logingUsername = document.getElementById('logingUsername');
+  var loginButton = document.getElementById('loginButton');
+  var gameDiv = document.getElementById('gameDiv');
+  var startButton = document.getElementById('startButton');
+  var canvas = document.getElementById('ctx');
+  var ctx = canvas.getContext("2d");
+  ctx.font = '20px Arial';
+  ctx.textAlign = 'center';
+
+  var startGame = false;
+  var time = 60 * 1000;
+
+  loginButton.onclick = function(){
+    socket.emit('login',{userName:logingUsername.value});
+  }
+
+  startButton.onclick = function() {
+    socket.emit('startGame',{startGame:startGame});
+  }
+
+  document.onmousedown = function(event){
+    if(startGame){
+      socket.emit('addScore',{score:1});
+    }
+  }
+
+  canvas.addEventListener('touchstart', function(event) {
+    console.log('touch');
+    if(startGame){
+      socket.emit('addScore',{score:1});
+    }
+  });
+
+  socket.on('startGameResponse', function(data) {
+    console.log("startGameResponse: " + data.startGame);
+    startGame = data.startGame;
+  });
+
+  socket.on('loginResponse',function(data){
+    if(data.success){
+      loginDiv.style.display = 'none';
+      gameDiv.style.display = 'inline-block';
+    }else{
+      alert("LoginIn in unsuccessul.");
+    }
+  });
+
+  var Player = function(initPack){
+    var self = {};
+    self.id = initPack.id;
+    self.userName = initPack.userName;
+    self.score = initPack.score;
+    Player.list[self.id] = self;
+    return self;
+  }
+  Player.list = {};
+
+  socket.on('init', function(data){
+    for(var i=0; i<data.player.length; i++){
+        new Player(data.player[i]);
+    }
+  });
+
+  socket.on('update', function (data) {
+    for(var i=0; i<data.player.length; i++){
+      var pack = data.player[i];
+      var p = Player.list[pack.id];
+      if(p !== undefined){
+        p.score = pack.score;
+      }
+    }
+  });
+
+  socket.on('remove', function(data){
+      for(var i=0; i<data.player.length; i++){
+        delete Player.list[data.player[i]];
+      }
+  });
+
+  var numberOfPlayers = function(){
+    var count = 0;
+    for(var p in Player.list){
+      count ++;
+    }
+    return count;
+  }
+
+  setInterval(function(){
+    var xProportional = canvas.width/16;
+    var yProportional = canvas.height/9;
+    var aux = 0;
+    var relativePositions = [
+      [8, 0, 0, 0],
+      [4, 12, 0 ,0],
+      [4, 8, 12, 0],
+      [2, 6, 10, 14]
+    ];
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(var i in Player.list){
+      var player = Player.list[i];
+      var userName = player.userName;
+      var playerNameWidth = ctx.measureText(userName).width;
+      ctx.fillText(player.userName, (xProportional*relativePositions[numberOfPlayers()-1][aux])-playerNameWidth/2,yProportional*8.5);
+      ctx.fillText(player.score, (xProportional*relativePositions[numberOfPlayers()-1][aux])-playerNameWidth/2,yProportional*4.5);
+      aux ++;
+    }
+  },40);
+</script>

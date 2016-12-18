@@ -1,0 +1,24 @@
+{
+  "name": "minigames-app",
+  "version": "1.0.0",
+  "author": "neondlh",
+  "description": "minigames-app",
+  "main": "app.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "start": "node app.js",
+    "predeploy": "echo im about to deploy",
+    "postdeploy": "echo ive deployed"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neondlh/minigames-app.git"
+  },
+  "dependencies" :
+  {
+    "express": "latest",
+    "socket.io": "latest"
+  },
+  "license": "MIT"
+}
